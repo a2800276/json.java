@@ -303,9 +303,11 @@ public class Lexer {
 					continue;
 				case HEX4:
 					if (!isHex(c)) {error(cb.state, c);}
+					cb.hexCache.append(c);
 					char u = toChar(cb.hexCache);
 					cb.cache.append(u);
 					cb.state = State.STRING_START;
+					continue;
 
 				default:
 				 error(cb.state, c);
@@ -395,6 +397,10 @@ public class Lexer {
 		p(json);
 		lex.lex(jsona, cb); 
 		
+		json	= "{\"a\":\"\\u2603\",\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
+		p(json);
+		lex.lex(json.toCharArray(), cb);
+
 		json	= "{\"a\":19560954.609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
 		p(json);
 		lex.lex(json.toCharArray(), cb);
