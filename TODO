@@ -1,0 +1,4 @@
+*LICENSE
+*nicer and consitant error handling
+*high-speed mode w/out BigDecimal
+*strict mode checking COLONs and COMMAs
