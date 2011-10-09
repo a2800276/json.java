@@ -37,9 +37,6 @@ public class Lexer {
     NULL,
     COMMA,
     COLON,
-    NUMBER,
-    STRING,
-    STR_HEX,
   }
   static abstract class CB {
     abstract void tok(Token tok);
