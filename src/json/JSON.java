@@ -7,6 +7,65 @@ import java.util.Stack;
 import java.util.List;
 import java.util.LinkedList;
 
+/** Simple JSON parsing for Java.  This class provides a rudimentary
+  * callback implementation that may be passed to @see json.Lexer . In
+  * case you are interested in writing your own specialized callback to
+  * use with json.Lexer the callback contained herein may be a good
+  * starting point.
+  *
+  * JSON objects (`{"bla":1}`) are converted to `java.utils.Map's` (Maps
+  * in the interface HashMaps for the implementation), JSON arrrays are
+  * converted to `java.util.List's` (LinkedList for the implementation),
+  * JSON Strings become Java Strings, Numbers become `BigDecimal`, `true`
+  * and `false` are boolean and null is, well, null.
+  *
+  * <h2> Usage </h2> <code>
+  *
+  * <code>
+  *   String json = "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
+  *   Object    o = JSON.parseJSON(json);
+  * </code> 
+  *
+  * In the example above, `o` will be a `java.util.Map` containing three
+  * keys, "a", "b" and "dingdong", each Strings. "a"'s value is a
+  * BigDecimal, "b"'s an array containing the BigDecimal values 1, 2,
+  * and 3 and "dingdong"'s value is another Map ...
+  *
+  * The intended use case for this is to write non-blocking webservices,
+  * this interface is meant to provide the functionality to process any
+  * scrap of data that happens to be available on the network. This
+  * requires a slightly more elaborate interface than the simple verson
+  * above:
+  * 
+  *   <code>
+  *  		JSON json = new JSON();
+  *  		while (arr = bytesAvailableFromSomewhere()) {
+  *  			j.parse(arr);
+  *  			if (json.done()) break;
+  *  		}
+  *  		Object result = json.obj();
+  *   </code>
+  *
+  * <h2> Accepted JSON </h2>
+  *
+  * This implementation should be able to handle any JSON conforming to
+  * JSON as described here (http://json.org).
+  *
+  * Technically, this parser accepts a superset of JSON that allows
+  * redundant ':' and ',' inside of JSON objects and Arrays to be left
+  * out, so it would accept:
+  *
+  *   <code>
+  *     { "a" 19560954609845.4456456 "b" [1 2 3] "dindong" {"b" 12}}
+  *   </code>
+  *
+  * as the equivalent of:
+  *
+  *   <code>
+  *     { "a" : 19560954609845.4456456, "b" : [1 2 3], "dindong" : {"b" 12}}
+  *   </code>
+  *
+  */
 public class JSON {
 	
 	static class LexerCB extends Lexer.CB {
@@ -84,37 +143,56 @@ public class JSON {
 				error();
 			}
 		}
-		Map  map()  {return new HashMap();}
-		List list() {return new LinkedList();}
+		Map  map()   {return new HashMap();}
+		List list()  {return new LinkedList();}
+
 		void error() {throw new RuntimeException();}
 	}
 
 	static class Key {
+		// Internal Marker class to keep track of keys and values on the
+		// stack of the parser. A `Key` object may only be placed on top of
+		// a `Map` (JSON Object). Encountering a `COLON` should only happen
+		// when there is a `Key` on top of the stack, etc.
 		Key (String s) {this.s = s;}
 		String s;
 	}
-	
-	static Object parseJSON (String json) {
-		char [] arr = json.toCharArray();
-		Lexer lex   = new Lexer();
+
+	/**
+	 * Utility method to parse a String containing valid JSON
+	 */	
+	public static Object parseJSON (String json) {
 		LexerCB cb = new LexerCB();
 		
-		lex.lex(arr, cb);
+		Lexer.lexer.lex(json.toCharArray(), cb);
 		return cb.stack.pop();
 	}
 
-	LexerCB cb;
-	Object  obj;
+	LexerCB cb = new LexerCB();
+	Object  obj; // result.
 
-	public JSON () {
-	this.cb = new LexerCB();
-	}
-	public void parseJSON(char [] arr) {
+	/**
+	 * Parse whatever bits of JSON you have available to you.
+	 */
+	public void parse(char [] arr) {
 		Lexer.lexer.lex(arr, this.cb);
 	}
+
+	/**
+	 * Returns whether the parser is in a consistant, balanced state.
+	 * Once the parser is `done` passing further data to it via `parse`
+	 * will trigger an Exception.
+	 */
 	public boolean done() {
 		return this.cb.done;
 	}
+
+	/** 
+	 * Retrieve the results of the parse. You need to ensure that the 
+	 * complete JSON object has been passed to parse, else this will throw
+	 * and Exception. Ideally, call `done()` before trying to retrieve the
+	 * results
+	 */
 	public Object obj () {
 		if (!done()) {
 			throw new RuntimeException("not done!");
@@ -129,21 +207,40 @@ public class JSON {
 	public static void main (String [] args) {
 		if (0 < args.length) {}
 
-    String json  = "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
+		String json  = "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
     
 		Object o = JSON.parseJSON(json);
 		p(json);
 		p(o);
+
+
+		json  = "{{\"a\":19560954609845.4456456}:1,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
+		p(json);
+		try {
+		o = JSON.parseJSON(json);
+		p(o);
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+
+
 		json  = "{\"a\" 19560954609845.4456456 \"b\" [1 2 3] \"dindong\" {\"b\" 12}}";
 		p(json);
 		o = JSON.parseJSON(json);
 		p(o);
 
-		json  = "{{\"a\":19560954609845.4456456}:1,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
-		p(json);
-		o = JSON.parseJSON(json);
-		p(o);
+		
+		JSON j = new JSON();
+		char [] a = json.toCharArray();
+		char [] b = new char[1];
+		for (int i = 0; /*i!=a.length*/; ++i) {
+			System.arraycopy(a,i,b,0,1);
+			j.parse(b);
+			if (j.done()) break;
+		}
+		p(j.obj());
 	}
+
 	static void p (Object o) {
 		System.out.println(o);
 	}
