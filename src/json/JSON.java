@@ -10,7 +10,7 @@ import java.util.LinkedList;
 public class JSON {
 	
 	static class LexerCB extends Lexer.CB {
-		Stack stack = new Stack();
+		Stack<Object> stack = new Stack<Object>();
 		boolean done;
 		
 
@@ -74,12 +74,12 @@ public class JSON {
 			}	
 			Object top = stack.peek();
 			if (top instanceof List) {
-				((List)top).add(o);
+				((List<Object>)top).add(o);
 			} else if (top instanceof Key) {
 				String key = ((Key)stack.pop()).s;
 				assert stack.size() > 0;
 				assert stack.peek() instanceof Map;
-				((Map)stack.peek()).put(key,o);
+				((Map<String, Object>)stack.peek()).put(key,o);
 			} else {
 				error();
 			}
@@ -102,6 +102,29 @@ public class JSON {
 		lex.lex(arr, cb);
 		return cb.stack.pop();
 	}
+
+	LexerCB cb;
+	Object  obj;
+
+	public JSON () {
+	this.cb = new LexerCB();
+	}
+	public void parseJSON(char [] arr) {
+		Lexer.lexer.lex(arr, this.cb);
+	}
+	public boolean done() {
+		return this.cb.done;
+	}
+	public Object obj () {
+		if (!done()) {
+			throw new RuntimeException("not done!");
+		}
+		if (null == this.obj) {
+			this.obj = this.cb.stack.pop();
+		}
+		return this.obj;
+	}
+	
 
 	public static void main (String [] args) {
 		if (0 < args.length) {}

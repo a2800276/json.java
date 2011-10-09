@@ -39,21 +39,31 @@ public class Lexer {
 		COLON,
 	}
 	static abstract class CB {
+		State state = State.VALUE;
 		abstract void tok(Token tok);
 		abstract void tok(String s);
 		abstract void tok(BigDecimal s);
 
 	}
+	
+	// you shouldn't ever need more than a single instance of Lexer, so here's a
+	// prepared instance to avoid having to create garbage. 
+	//
+	// I'm not enforcing the use of a single instance because:
+	//
+	// * who am I to judge whether you need more instances.
+	// * the way java handle static is fairly retarded for non-trivial cases
+	// * I think singletons are overrated.
 
-
-	State state = State.VALUE;
+	public static Lexer lexer = new Lexer();
+	
 	StringBuffer cache; 
 	StringBuffer hexCache; 
 
 	void lex (char [] arr, CB cb) {
 		for (int i = 0; i != arr.length; ++i) {
 			char c = arr[i];
-			switch (state) {
+			switch (cb.state) {
 				case VALUE:
 					if (isWS(c)) {
 						continue;
@@ -61,7 +71,7 @@ public class Lexer {
 					switch (c) {
 						// String
 						case '"':
-							state = State.STRING_START;
+							cb.state = State.STRING_START;
 							cache = new StringBuffer();
 							continue;
 
@@ -77,102 +87,105 @@ public class Lexer {
 						case '8':
 						case '9':
 						case '0':
-							state = State.NUMBER_START;
+							cb.state = State.NUMBER_START;
 							cache = new StringBuffer();
 							cache.append(c); 
 							continue;
 
 						// Object
 						case '{':
-							state = State.VALUE;
+							cb.state = State.VALUE;
 							cb.tok(Token.LCURLY);
 							continue;
 
 						// Array
 						case '[':
-							state = State.VALUE;
+							cb.state = State.VALUE;
 							cb.tok(Token.LSQUARE);
 							continue;
 						// true
 						case 't':
-							state = State.T;
+							cb.state = State.T;
 							continue;
 						// false
 						case 'f':
-							state = State.F;
+							cb.state = State.F;
 							continue;
 						// null
 						case 'n':
-							state = State.N;
+							cb.state = State.N;
 							continue;
 						default:
-							error();
+							error(cb.state);
 					}
 
 				case T:
 					if ('r' == c) {
-						state = State.TR;
+						cb.state = State.TR;
 						continue;
 					}
-					error(c);
+					error(cb.state, c);
 				case TR:
 					if ('u' == c) {
-						state = State.TRU;
+						cb.state = State.TRU;
 						continue;
 					}
-					error();
+					error(cb.state, c);
 				case TRU:
 					if ('e' == c) {
 						cb.tok(Token.TRUE);
-						state = State.AFTER_VALUE;
+						cb.state = State.AFTER_VALUE;
 						continue;
 					}
-					error();
+					error(cb.state, c);
 
 				case F:
 					if ('a' == c) {
-						state = State.FA;
+						cb.state = State.FA;
 						continue;
 					}
-					error();
+					error(cb.state, c);
 				case FA:
 					if ('l' == c) {
-						state = State.FAL;
+						cb.state = State.FAL;
 						continue;
 					}
-					error();
+					error(cb.state, c);
 				case FAL:
 					if ('s' == c) {
-						state = State.FALS;
+						cb.state = State.FALS;
 						continue;
 					}
-					error();
+					error(cb.state, c);
 				case FALS:
 					if ('e' == c) {
 						cb.tok(Token.FALSE);
-						state = State.AFTER_VALUE;
+						cb.state = State.AFTER_VALUE;
 						continue;
 					}
-					error();
+					error(cb.state, c);
 
 				case N:
 					if ('u' == c) {
-						state = State.NU;
+						cb.state = State.NU;
 						continue;
 					}
-					error();
+					error(cb.state, c);
+
 				case NU:
 					if ('l' == c) {
-						state = State.NUL;
+						cb.state = State.NUL;
 						continue;
 					}
-					error();
+					error(cb.state, c);
+
 				case NUL:
 					if ('l' == c) {
 						cb.tok(Token.NULL);
-						state = State.AFTER_VALUE;
+						cb.state = State.AFTER_VALUE;
 						continue;
 					}
+					error(cb.state, c);
 					
 				case AFTER_VALUE: 
 					if (isWS(c)) {
@@ -193,7 +206,7 @@ public class Lexer {
 							continue;
 						default:
 							--i;
-							state = State.VALUE;
+							cb.state = State.VALUE;
 							continue;
 					}
 
@@ -219,7 +232,7 @@ public class Lexer {
 						default:
 							cb.tok(num(cache));
 							--i;
-							state = State.AFTER_VALUE;
+							cb.state = State.AFTER_VALUE;
 							continue;
 					} 
 
@@ -227,14 +240,14 @@ public class Lexer {
 					switch (c) {
 						case '"':
 							cb.tok(cache.toString());
-							state = State.AFTER_VALUE;
+							cb.state = State.AFTER_VALUE;
 							continue;
 						case '\\':
-							state = State.STR_ESC;
+							cb.state = State.STR_ESC;
 							continue;
 						default:
 							if (Character.isISOControl(c)) {
-								error();
+								error(cb.state, c);
 							}
 							cache.append(c);
 							continue;
@@ -262,36 +275,36 @@ public class Lexer {
 							cache.append('\t');
 							break;
 						case 'u':
-							state = State.HEX1;
+							cb.state = State.HEX1;
 							continue;
 						default:
-							error();
+							error(cb.state, c);
 					}
-					state = State.STRING_START;
+					cb.state = State.STRING_START;
 					continue;
 				case HEX1:
-					if (!isHex(c)) {error();}
+					if (!isHex(c)) {error(cb.state, c);}
 					hexCache = new StringBuffer();
 					hexCache.append(c);
-					state = State.HEX2;
+					cb.state = State.HEX2;
 					continue;
 				case HEX2:
-					if (!isHex(c)) {error();}
+					if (!isHex(c)) {error(cb.state, c);}
 					hexCache.append(c);
-					state = State.HEX3;
+					cb.state = State.HEX3;
 					continue;
 				case HEX3:
-					if (!isHex(c)) {error();}
+					if (!isHex(c)) {error(cb.state,c);}
 					hexCache.append(c);
-					state = State.HEX4;
+					cb.state = State.HEX4;
 					continue;
 				case HEX4:
-					if (!isHex(c)) {error();}
+					if (!isHex(c)) {error(cb.state, c);}
 					char u = toChar(hexCache);
 					cache.append(u);
-					state = State.STRING_START;
+					cb.state = State.STRING_START;
 				default:
-				 error();
+				 error(cb.state, c);
 			} // state switch 
 		}// for
 	}
@@ -346,11 +359,11 @@ public class Lexer {
 		}
 	}
 	
-	void error () {
-		error("??? "+state);
+	void error (State state) {
+		error("??? "+ state);
 	}
 
-	void error (char c) {
+	void error (State state, char c) {
 		error("unexpected char: "+c+" in state: "+state);
 	}
 
