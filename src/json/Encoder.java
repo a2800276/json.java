@@ -9,6 +9,10 @@ public class Encoder {
 		return b.toString();
 	}
 	private static void encode (StringBuilder buf, Object o) {
+		if (null == o) { 
+			buf.append("null");
+			return;
+		}
 		if (o instanceof Map) {
 			encode(buf, (Map)o);
 		} else if (o instanceof List) {
@@ -17,8 +21,13 @@ public class Encoder {
 			encode(buf, (Number)o);
 		} else if (o instanceof CharSequence) {
 			encode(buf, (CharSequence)o);
-		} else {
-			eggplod(o);
+		} else if (o instanceof Character) {
+			encode(buf, ((Character)o).charValue());
+		} else if (o.getClass().isArray()) {
+			encodeArray(buf, o);
+		}else {
+			p(o.getClass().getName());
+			eggplod(o.getClass());
 		}
 	}
 	static void eggplod(Object o) {throw new RuntimeException(o.toString());}
@@ -39,6 +48,22 @@ public class Encoder {
 		for (Object k : l) {
 			encode(buf, k);
 			buf.append(",");
+		}
+		buf.setCharAt(buf.length()-1, ']');
+	}
+	static void encodeArray (StringBuilder buf, Object arr) {
+		assert arr.getClass().isArray();
+
+		buf.append('[');
+		Object o = null;
+		for (int i=0; ;++i) {
+			try {
+				o = java.lang.reflect.Array.get(arr, i);
+				encode(buf, o);
+				buf.append(",");
+			} catch (ArrayIndexOutOfBoundsException aioobe) {
+				break;
+			}
 		}
 		buf.setCharAt(buf.length()-1, ']');
 	}
@@ -110,7 +135,7 @@ public class Encoder {
 		encode(b, (double)1.0);
 		encode(b, (byte)1);
 		encode(b, (short)1);
-		encode(b, '1');
+		encode(b, (Object)'1');
 	
 		p(b);
 
@@ -118,5 +143,9 @@ public class Encoder {
 		Map m = (Map)JSON.parseJSON(json);
 		p(json);		
 		p(encode(m));
+		
+		int [] is = {1,2,3};
+		p(encode(is));
+
 	}
 }
