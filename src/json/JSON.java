@@ -138,6 +138,11 @@ public class JSON {
 		p(json);
 		o = JSON.parseJSON(json);
 		p(o);
+
+		json  = "{{\"a\":19560954609845.4456456}:1,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
+		p(json);
+		o = JSON.parseJSON(json);
+		p(o);
 	}
 	static void p (Object o) {
 		System.out.println(o);
