@@ -25,8 +25,8 @@ public class Lexer {
 		HEX2,
 		HEX3,
 		HEX4,
-		
 	}
+
 	enum Token {
 		LCURLY,
 		LSQUARE,
@@ -38,15 +38,17 @@ public class Lexer {
 		COMMA,
 		COLON,
 	}
+	
 	static abstract class CB {
 		State state = State.VALUE;
+		StringBuffer cache; 
+		StringBuffer hexCache; 
 		abstract void tok(Token tok);
 		abstract void tok(String s);
 		abstract void tok(BigDecimal s);
-
 	}
 	
-	// you shouldn't ever need more than a single instance of Lexer, so here's a
+	// You shouldn't ever need more than a single instance of Lexer, so here's a
 	// prepared instance to avoid having to create garbage. 
 	//
 	// I'm not enforcing the use of a single instance because:
@@ -56,9 +58,6 @@ public class Lexer {
 	// * I think singletons are overrated.
 
 	public static Lexer lexer = new Lexer();
-	
-	StringBuffer cache; 
-	StringBuffer hexCache; 
 
 	void lex (char [] arr, CB cb) {
 		for (int i = 0; i != arr.length; ++i) {
@@ -72,7 +71,7 @@ public class Lexer {
 						// String
 						case '"':
 							cb.state = State.STRING_START;
-							cache = new StringBuffer();
+							cb.cache = new StringBuffer();
 							continue;
 
 						// Number
@@ -88,8 +87,8 @@ public class Lexer {
 						case '9':
 						case '0':
 							cb.state = State.NUMBER_START;
-							cache = new StringBuffer();
-							cache.append(c); 
+							cb.cache = new StringBuffer();
+							cb.cache.append(c); 
 							continue;
 
 						// Object
@@ -103,18 +102,22 @@ public class Lexer {
 							cb.state = State.VALUE;
 							cb.tok(Token.LSQUARE);
 							continue;
+
 						// true
 						case 't':
 							cb.state = State.T;
 							continue;
+
 						// false
 						case 'f':
 							cb.state = State.F;
 							continue;
+
 						// null
 						case 'n':
 							cb.state = State.N;
 							continue;
+
 						default:
 							error(cb.state);
 					}
@@ -171,14 +174,12 @@ public class Lexer {
 						continue;
 					}
 					error(cb.state, c);
-
 				case NU:
 					if ('l' == c) {
 						cb.state = State.NUL;
 						continue;
 					}
 					error(cb.state, c);
-
 				case NUL:
 					if ('l' == c) {
 						cb.tok(Token.NULL);
@@ -227,10 +228,10 @@ public class Lexer {
 						case '+':
 						case '-':
 						case '.':
-							cache.append(c);
+							cb.cache.append(c);
 							continue;
 						default:
-							cb.tok(num(cache));
+							cb.tok(num(cb.cache));
 							--i;
 							cb.state = State.AFTER_VALUE;
 							continue;
@@ -239,7 +240,7 @@ public class Lexer {
 				case STRING_START:
 					switch (c) {
 						case '"':
-							cb.tok(cache.toString());
+							cb.tok(cb.cache.toString());
 							cb.state = State.AFTER_VALUE;
 							continue;
 						case '\\':
@@ -249,30 +250,31 @@ public class Lexer {
 							if (Character.isISOControl(c)) {
 								error(cb.state, c);
 							}
-							cache.append(c);
+							cb.cache.append(c);
 							continue;
 					}
+
 				case STR_ESC:
 					switch (c) {
 						case '"':
 						case '/':
 						case '\\':
-							cache.append(c);
+							cb.cache.append(c);
 							break;
 						case 'b':
-							cache.append('\b');
+							cb.cache.append('\b');
 							break;
 						case 'f':
-							cache.append('\f');
+							cb.cache.append('\f');
 							break;
 						case 'n':
-							cache.append('\r');
+							cb.cache.append('\r');
 							break;
 						case 'r':
-							cache.append('\r');
+							cb.cache.append('\r');
 							break;
 						case 't':
-							cache.append('\t');
+							cb.cache.append('\t');
 							break;
 						case 'u':
 							cb.state = State.HEX1;
@@ -282,27 +284,29 @@ public class Lexer {
 					}
 					cb.state = State.STRING_START;
 					continue;
+
 				case HEX1:
 					if (!isHex(c)) {error(cb.state, c);}
-					hexCache = new StringBuffer();
-					hexCache.append(c);
+					cb.hexCache = new StringBuffer();
+					cb.hexCache.append(c);
 					cb.state = State.HEX2;
 					continue;
 				case HEX2:
 					if (!isHex(c)) {error(cb.state, c);}
-					hexCache.append(c);
+					cb.hexCache.append(c);
 					cb.state = State.HEX3;
 					continue;
 				case HEX3:
 					if (!isHex(c)) {error(cb.state,c);}
-					hexCache.append(c);
+					cb.hexCache.append(c);
 					cb.state = State.HEX4;
 					continue;
 				case HEX4:
 					if (!isHex(c)) {error(cb.state, c);}
-					char u = toChar(hexCache);
-					cache.append(u);
+					char u = toChar(cb.hexCache);
+					cb.cache.append(u);
 					cb.state = State.STRING_START;
+
 				default:
 				 error(cb.state, c);
 			} // state switch 
