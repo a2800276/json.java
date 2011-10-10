@@ -180,6 +180,11 @@ public class Encoder {
 		
 		Map map = new java.util.HashMap();
 		map.put("bla", map);
-		p(JSON.jsonify(map));
+		try {
+			p(JSON.jsonify(map));
+			p("failed: data contained circular refs, should have thrown exception");
+		} catch (RuntimeException re) {
+			p("expected failure: \n\t"+re.getMessage());
+		}
 	}
 }

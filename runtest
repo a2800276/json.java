@@ -1,3 +1,4 @@
+java -d classes `find src -name \*.java`
 java -cp classes json.Encoder
 java -cp classes json.Lexer
 java -cp classes json.JSON

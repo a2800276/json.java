@@ -179,13 +179,14 @@ public class JSON {
 				assert stack.peek() instanceof Map;
 				((Map<String, Object>)stack.peek()).put(key,o);
 			} else {
-				error();
+				error("unexpected: "+o.getClass().getName()+" after: "+(stack.peek().getClass().getName()));
 			}
 		}
 		Map  map()   {return new HashMap();}
 		List list()  {return new LinkedList();}
 
-		void error() {throw new RuntimeException();}
+		void error()         {error("?");}
+		void error(String m) {throw new RuntimeException(m);}
 	}
 
 	static class Key {
@@ -247,10 +248,10 @@ public class JSON {
 		json  = "{{\"a\":19560954609845.4456456}:1,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
 		p(json);
 		try {
-		o = JSON.parse(json);
-		p(o);
+			o = JSON.parse(json);
+			p("failed: JSON-Obj as key should cause exception");
 		} catch (Throwable t) {
-			t.printStackTrace();
+			p("failed as expected: \n\t"+t.getMessage());
 		}
 
 

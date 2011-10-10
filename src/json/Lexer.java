@@ -381,7 +381,6 @@ public class Lexer {
 		String	json	= "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
 		char [] jsona = json.toCharArray();
 	
-		Lexer lex = new Lexer();
 		Lexer.CB cb = new Lexer.CB() {
 			void tok(Token tok) {
 				p(tok);
@@ -395,15 +394,20 @@ public class Lexer {
 		};
 
 		p(json);
-		lex.lex(jsona, cb); 
+		Lexer.lexer.lex(jsona, cb); 
 		
 		json	= "{\"a\":\"\\u2603\",\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
 		p(json);
-		lex.lex(json.toCharArray(), cb);
+		Lexer.lexer.lex(json.toCharArray(), cb);
 
 		json	= "{\"a\":19560954.609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
 		p(json);
-		lex.lex(json.toCharArray(), cb);
+		try {
+			Lexer.lexer.lex(json.toCharArray(), cb);
+			p("failed: should not be here! 19560954.609845.4456456 is not a number");
+		} catch (RuntimeException re) {
+			p("expected failure: \n\t"+re.getMessage());
+		}
 	}
 
 	static void p(Object o) {
