@@ -63,7 +63,7 @@ This is, in fact how the default parser is implemented. In case you would like t
 
 ### Creating JSON
 
-The facilities for creating JSON are fairly primitive and aren't at the focus of my attention.
+The facilities for creating JSON are fairly primitive and aren't at the focus of my attention. Currently the same sort of stuff™ the library produces when parsing (i.e. Lists, Maps, primary data types and Strings) can be converted to JSON automatically. Also Arrays may be used instead of Lists. Apart from that, you're currently on your own.
 
 
 ## Miscellanea
