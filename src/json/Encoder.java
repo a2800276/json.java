@@ -1,8 +1,22 @@
 package json;
 import java.util.Map;
 import java.util.List;
-public class Encoder {
+import java.util.Set;
 
+public class Encoder {
+	
+	/**
+	 * Mungle up an Object into JSON. There are a bunch of
+	 * cases this can't handle, for example: just any old stuff.
+	 *
+	 * Object passed to this method needs to be:
+	 * <ul>
+	 * <li> primitive
+	 * <li> java.util.Map
+	 * <li> java.util.List
+	 * <li> an Array of one of the above
+	 * </ul>
+	 */
 	public static String jsonify (Object o) {
 		Encoder e = new Encoder();
 		        e.encode(o);
@@ -16,6 +30,7 @@ public class Encoder {
 		this.buf  = new StringBuilder();
 		this.circ = new java.util.LinkedList<Object>();
 	}
+
 	void encode (Object o) {
 		if (null == o) { 
 			buf.append("null");
@@ -26,7 +41,7 @@ public class Encoder {
 		} else if (o instanceof List) {
 			encode((List)o);
 		} else if (o instanceof Number) {
-			encode((Number)o);
+			encode(buf, (Number)o);
 		} else if (o instanceof CharSequence) {
 			encode(buf, (CharSequence)o);
 		} else if (o instanceof Character) {
@@ -35,12 +50,13 @@ public class Encoder {
 			encodeArray(o);
 		}else {
 			p(o.getClass().getName());
-			eggplod(o.getClass());
+			eggsplod(o.getClass());
 		}
 	}
-	 void eggplod(Object o) {throw new RuntimeException(o.toString());}
+	void eggsplod(Object o) {throw new RuntimeException(o.toString());}
 
-	 void encode (Map m) {
+	void encode (Map m) {
+		checkCircular(m);
 		buf.append('{');
 		for (Object k : m.keySet()) {
 			Object v = m.get(k);
@@ -52,7 +68,8 @@ public class Encoder {
 		buf.setCharAt(buf.length()-1, '}');
 	}
 
-	 void encode (List l) {
+	void encode (List l) {
+		checkCircular(l);
 		buf.append('[');
 		for (Object k : l) {
 			encode(k);
@@ -60,7 +77,9 @@ public class Encoder {
 		}
 		buf.setCharAt(buf.length()-1, ']');
 	}
-	 void encodeArray (Object arr) {
+
+	void encodeArray (Object arr) {
+		checkCircular(arr);
 		assert arr.getClass().isArray();
 
 		buf.append('[');
@@ -75,6 +94,14 @@ public class Encoder {
 			}
 		}
 		buf.setCharAt(buf.length()-1, ']');
+	}
+
+	void checkCircular(Object m) {
+		if (circ.contains(m)) {
+			eggsplod("circular");
+		} else {
+			circ.add(m);
+		}
 	}
 
 	static void encode (StringBuilder buf, CharSequence s) {
