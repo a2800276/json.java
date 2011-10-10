@@ -3,55 +3,64 @@ import java.util.Map;
 import java.util.List;
 public class Encoder {
 
-	public static String encode (Object o) {
-		StringBuilder b = new StringBuilder();
-		encode(b, o);
-		return b.toString();
+	public static String jsonify (Object o) {
+		Encoder e = new Encoder();
+		        e.encode(o);
+		return e.buf.toString();
 	}
-	private static void encode (StringBuilder buf, Object o) {
+	
+	StringBuilder buf;
+	List          circ;
+
+	public Encoder () {
+		this.buf  = new StringBuilder();
+		this.circ = new java.util.LinkedList<Object>();
+	}
+	void encode (Object o) {
 		if (null == o) { 
 			buf.append("null");
 			return;
 		}
 		if (o instanceof Map) {
-			encode(buf, (Map)o);
+			encode((Map)o);
 		} else if (o instanceof List) {
-			encode(buf, (List)o);
+			encode((List)o);
 		} else if (o instanceof Number) {
-			encode(buf, (Number)o);
+			encode((Number)o);
 		} else if (o instanceof CharSequence) {
 			encode(buf, (CharSequence)o);
 		} else if (o instanceof Character) {
 			encode(buf, ((Character)o).charValue());
 		} else if (o.getClass().isArray()) {
-			encodeArray(buf, o);
+			encodeArray(o);
 		}else {
 			p(o.getClass().getName());
 			eggplod(o.getClass());
 		}
 	}
-	static void eggplod(Object o) {throw new RuntimeException(o.toString());}
-	static void encode (StringBuilder buf, Map m) {
+	 void eggplod(Object o) {throw new RuntimeException(o.toString());}
+
+	 void encode (Map m) {
 		buf.append('{');
 		for (Object k : m.keySet()) {
 			Object v = m.get(k);
 			encode(buf, k.toString());
 			buf.append(':');
-			encode(buf, v);
+			encode(v);
 			buf.append(",");
 		}
 		buf.setCharAt(buf.length()-1, '}');
 	}
 
-	static void encode (StringBuilder buf, List l) {
+	 void encode (List l) {
 		buf.append('[');
 		for (Object k : l) {
-			encode(buf, k);
+			encode(k);
 			buf.append(",");
 		}
 		buf.setCharAt(buf.length()-1, ']');
 	}
-	static void encodeArray (StringBuilder buf, Object arr) {
+	 void encodeArray (Object arr) {
 		assert arr.getClass().isArray();
 
 		buf.append('[');
@@ -59,7 +68,7 @@ public class Encoder {
 		for (int i=0; ;++i) {
 			try {
 				o = java.lang.reflect.Array.get(arr, i);
-				encode(buf, o);
+				encode(o);
 				buf.append(",");
 			} catch (ArrayIndexOutOfBoundsException aioobe) {
 				break;
@@ -135,17 +144,20 @@ public class Encoder {
 		encode(b, (double)1.0);
 		encode(b, (byte)1);
 		encode(b, (short)1);
-		encode(b, (Object)'1');
+		encode(b, '1');
 	
 		p(b);
 
 		String	json	= "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
 		Map m = (Map)JSON.parseJSON(json);
 		p(json);		
-		p(encode(m));
+		p(jsonify(m));
 		
 		int [] is = {1,2,3};
-		p(encode(is));
-
+		p(jsonify(is));
+		
+		Map map = new java.util.HashMap();
+		map.put("bla", map);
+		p(jsonify(map));
 	}
 }
