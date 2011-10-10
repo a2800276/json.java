@@ -1,0 +1,3 @@
+java -cp classes json.Encoder
+java -cp classes json.Lexer
+java -cp classes json.JSON

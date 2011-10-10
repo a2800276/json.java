@@ -1,32 +1,27 @@
 package json;
+
 import java.util.Map;
 import java.util.List;
 import java.util.Set;
 
 public class Encoder {
 	
-	/**
-	 * Mungle up an Object into JSON. There are a bunch of
-	 * cases this can't handle, for example: just any old stuff.
-	 *
-	 * Object passed to this method needs to be:
-	 * <ul>
-	 * <li> primitive
-	 * <li> java.util.Map
-	 * <li> java.util.List
-	 * <li> an Array of one of the above
-	 * </ul>
-	 */
-	public static String jsonify (Object o) {
-		Encoder e = new Encoder();
-		        e.encode(o);
-		return e.buf.toString();
-	}
 	
 	StringBuilder buf;
+
+	// Keep track of circular data-structures: before encoding a
+	// JSON-Object/Hash/Map/List/Array make sure it's not contained in
+	// `circ`. If it is contained, throw an exception, b/c we can't encode
+	// circular structs. If it's not contained, put it in so that we can
+	// recognize it next time around...
+	//
+	// A `Set` would be a better fit here but:
+	//   * HashSet's get confused at circular Maps
+	//   * TreeSet's won't work w/out a custom Comparator
+	//   * I got sick of fiddling around with this crap.
 	List          circ;
 
-	public Encoder () {
+	Encoder () {
 		this.buf  = new StringBuilder();
 		this.circ = new java.util.LinkedList<Object>();
 	}
@@ -176,15 +171,15 @@ public class Encoder {
 		p(b);
 
 		String	json	= "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
-		Map m = (Map)JSON.parseJSON(json);
+		Map m = (Map)JSON.parse(json);
 		p(json);		
-		p(jsonify(m));
+		p(JSON.jsonify(m));
 		
 		int [] is = {1,2,3};
-		p(jsonify(is));
+		p(JSON.jsonify(is));
 		
 		Map map = new java.util.HashMap();
 		map.put("bla", map);
-		p(jsonify(map));
+		p(JSON.jsonify(map));
 	}
 }

@@ -68,6 +68,45 @@ import java.util.LinkedList;
   */
 public class JSON {
 	
+	/**
+	 * Utility method to parse a String containing valid JSON
+	 */	
+	public static Object parse (String json) {
+		LexerCB cb = new LexerCB();
+		Lexer.lexer.lex(json.toCharArray(), cb);
+		return cb.stack.pop();
+	}
+
+	/**
+	 * Mungle up an Object into JSON. There are a bunch of
+	 * cases this can't handle, for example: just any old stuff.
+	 *
+	 * Object passed to this method needs to be:
+	 * <ul>
+	 * <li> primitive
+	 * <li> java.util.Map
+	 * <li> java.util.List
+	 * <li> an Array of one of the above
+	 * </ul>
+	 */
+	public static String jsonify (Object o) {
+		Encoder e = new Encoder();
+		        e.encode(o);
+		return e.buf.toString();
+		
+		// Of course, there would be a number of ways to encode just any old
+		// stuff. Easiest would be calling `toString` on unknown classes and
+		// encoding their String representation. OR treat them as an
+		// data-containers and encode all their public fields. OR treat them
+		// as Beans(tm) [yuckyuckyuck].
+		//
+		// The best way to go would be some sort of `unknown class Handler`
+		// to stuff into the encoder to roll your own strategy for dealing
+		// with this...
+ 		//
+		// I have yet to decide an will do so when I need to.
+	}
+
 	static class LexerCB extends Lexer.CB {
 		Stack<Object> stack = new Stack<Object>();
 		boolean done;
@@ -158,15 +197,6 @@ public class JSON {
 		String s;
 	}
 
-	/**
-	 * Utility method to parse a String containing valid JSON
-	 */	
-	public static Object parseJSON (String json) {
-		LexerCB cb = new LexerCB();
-		
-		Lexer.lexer.lex(json.toCharArray(), cb);
-		return cb.stack.pop();
-	}
 
 	LexerCB cb = new LexerCB();
 	Object  obj; // result.
@@ -209,7 +239,7 @@ public class JSON {
 
 		String json  = "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
     
-		Object o = JSON.parseJSON(json);
+		Object o = JSON.parse(json);
 		p(json);
 		p(o);
 
@@ -217,7 +247,7 @@ public class JSON {
 		json  = "{{\"a\":19560954609845.4456456}:1,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
 		p(json);
 		try {
-		o = JSON.parseJSON(json);
+		o = JSON.parse(json);
 		p(o);
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -226,7 +256,7 @@ public class JSON {
 
 		json  = "{\"a\" 19560954609845.4456456 \"b\" [1 2 3] \"dindong\" {\"b\" 12}}";
 		p(json);
-		o = JSON.parseJSON(json);
+		o = JSON.parse(json);
 		p(o);
 
 		
