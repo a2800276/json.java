@@ -53,8 +53,8 @@ public class Lexer {
 	//
 	// I'm not enforcing the use of a single instance because:
 	//
-	// * who am I to judge whether you need more instances.
-	// * the way java handle static is fairly retarded for non-trivial cases
+	// * who am I to judge whether you need more instances?
+	// * the way java handles static is fairly retarded for non-trivial cases
 	// * I think singletons are overrated.
 
 	public static Lexer lexer = new Lexer();
