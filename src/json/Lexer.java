@@ -65,8 +65,8 @@ public class Lexer {
 	}
 
 	public void lex (byte [] arr, int off, int len, CB cb) {
-		for (int i = 0; i != len; ++i, ++cb.pos) {
-			byte c = arr[i+off];
+		for (int i = off, end=off+len; i != end; ++i, ++cb.pos) {
+			byte c = arr[i];
       //p((char)c + ":" + cb.state+" i:"+i+":"+len);
 			switch (cb.state) {
 				case VALUE:
