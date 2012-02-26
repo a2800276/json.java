@@ -59,9 +59,13 @@ public class Lexer {
 
 	public static Lexer lexer = new Lexer();
 
-	void lex (byte [] arr, CB cb) {
-		for (int i = 0; i != arr.length; ++i) {
-			byte c = arr[i];
+	public void lex (byte [] arr, CB cb) { 
+    lex(arr, 0, arr.length, cb);
+  }
+
+	public void lex (byte [] arr, int off, int len, CB cb) {
+		for (int i = 0; i != len; ++i) {
+			byte c = arr[i+off];
 			switch (cb.state) {
 				case VALUE:
 					if (isWS(c)) {

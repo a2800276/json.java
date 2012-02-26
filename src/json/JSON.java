@@ -206,8 +206,12 @@ public class JSON {
 	 * Parse whatever bits of JSON you have available to you.
 	 */
 	public void parse(byte [] arr) {
-		Lexer.lexer.lex(arr, this.cb);
+    parse(arr, 0, arr.length);
 	}
+
+  public void parse(byte [] arr, int off, int len) {
+		Lexer.lexer.lex(arr, this.cb);
+  }
 
 	/**
 	 * Returns whether the parser is in a consistant, balanced state.
