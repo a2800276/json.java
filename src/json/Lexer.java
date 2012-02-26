@@ -40,9 +40,10 @@ public class Lexer {
 	}
 	
 	static abstract class CB {
+		int pos;
 		State state = State.VALUE;
-		StringBuffer cache; 
-		StringBuffer hexCache; 
+		StringBuilder cache; 
+		StringBuilder hexCache; 
 		abstract void tok(Token tok);
 		abstract void tok(String s);
 		abstract void tok(BigDecimal s);
@@ -60,12 +61,13 @@ public class Lexer {
 	public static Lexer lexer = new Lexer();
 
 	public void lex (byte [] arr, CB cb) { 
-    lex(arr, 0, arr.length, cb);
-  }
+		lex(arr, 0, arr.length, cb);
+	}
 
 	public void lex (byte [] arr, int off, int len, CB cb) {
-		for (int i = 0; i != len; ++i) {
+		for (int i = 0; i != len; ++i, ++cb.pos) {
 			byte c = arr[i+off];
+      //p((char)c + ":" + cb.state+" i:"+i+":"+len);
 			switch (cb.state) {
 				case VALUE:
 					if (isWS(c)) {
@@ -75,7 +77,7 @@ public class Lexer {
 						// String
 						case '"':
 							cb.state = State.STRING_START;
-							cb.cache = new StringBuffer();
+							cb.cache = new StringBuilder();
 							continue;
 
 						// Number
@@ -91,8 +93,8 @@ public class Lexer {
 						case '9':
 						case '0':
 							cb.state = State.NUMBER_START;
-							cb.cache = new StringBuffer();
-							cb.cache.append(c); 
+							cb.cache = new StringBuilder();
+							cb.cache.append((char)c); 
 							continue;
 
 						// Object
@@ -101,10 +103,20 @@ public class Lexer {
 							cb.tok(Token.LCURLY);
 							continue;
 
+						case '}':
+							cb.state = State.AFTER_VALUE;
+							cb.tok(Token.RCURLY);
+							continue;
+
 						// Array
 						case '[':
 							cb.state = State.VALUE;
 							cb.tok(Token.LSQUARE);
+							continue;
+
+						case ']':
+							cb.state = State.AFTER_VALUE;
+							cb.tok(Token.RSQUARE);
 							continue;
 
 						// true
@@ -123,7 +135,7 @@ public class Lexer {
 							continue;
 
 						default:
-							error(cb.state);
+							error(cb, c);
 					}
 
 				case T:
@@ -131,66 +143,66 @@ public class Lexer {
 						cb.state = State.TR;
 						continue;
 					}
-					error(cb.state, c);
+					error(cb, c);
 				case TR:
 					if ('u' == c) {
 						cb.state = State.TRU;
 						continue;
 					}
-					error(cb.state, c);
+					error(cb, c);
 				case TRU:
 					if ('e' == c) {
 						cb.tok(Token.TRUE);
 						cb.state = State.AFTER_VALUE;
 						continue;
 					}
-					error(cb.state, c);
+					error(cb, c);
 
 				case F:
 					if ('a' == c) {
 						cb.state = State.FA;
 						continue;
 					}
-					error(cb.state, c);
+					error(cb, c);
 				case FA:
 					if ('l' == c) {
 						cb.state = State.FAL;
 						continue;
 					}
-					error(cb.state, c);
+					error(cb, c);
 				case FAL:
 					if ('s' == c) {
 						cb.state = State.FALS;
 						continue;
 					}
-					error(cb.state, c);
+					error(cb, c);
 				case FALS:
 					if ('e' == c) {
 						cb.tok(Token.FALSE);
 						cb.state = State.AFTER_VALUE;
 						continue;
 					}
-					error(cb.state, c);
+					error(cb, c);
 
 				case N:
 					if ('u' == c) {
 						cb.state = State.NU;
 						continue;
 					}
-					error(cb.state, c);
+					error(cb, c);
 				case NU:
 					if ('l' == c) {
 						cb.state = State.NUL;
 						continue;
 					}
-					error(cb.state, c);
+					error(cb, c);
 				case NUL:
 					if ('l' == c) {
 						cb.tok(Token.NULL);
 						cb.state = State.AFTER_VALUE;
 						continue;
 					}
-					error(cb.state, c);
+					error(cb, c);
 					
 				case AFTER_VALUE: 
 					if (isWS(c)) {
@@ -211,6 +223,7 @@ public class Lexer {
 							continue;
 						default:
 							--i;
+							--cb.pos;
 							cb.state = State.VALUE;
 							continue;
 					}
@@ -232,11 +245,12 @@ public class Lexer {
 						case '+':
 						case '-':
 						case '.':
-							cb.cache.append(c);
+							cb.cache.append((char)c);
 							continue;
 						default:
 							cb.tok(num(cb.cache));
 							--i;
+							--cb.pos;
 							cb.state = State.AFTER_VALUE;
 							continue;
 					} 
@@ -252,9 +266,9 @@ public class Lexer {
 							continue;
 						default:
 							if (Character.isISOControl(c)) {
-								error(cb.state, c);
+								error(cb, c);
 							}
-							cb.cache.append(c);
+							cb.cache.append((char)c);
 							continue;
 					}
 
@@ -263,7 +277,7 @@ public class Lexer {
 						case '"':
 						case '/':
 						case '\\':
-							cb.cache.append(c);
+							cb.cache.append((char)c);
 							break;
 						case 'b':
 							cb.cache.append('\b');
@@ -284,37 +298,37 @@ public class Lexer {
 							cb.state = State.HEX1;
 							continue;
 						default:
-							error(cb.state, c);
+							error(cb, c);
 					}
 					cb.state = State.STRING_START;
 					continue;
 
 				case HEX1:
-					if (!isHex(c)) {error(cb.state, c);}
-					cb.hexCache = new StringBuffer();
-					cb.hexCache.append(c);
+					if (!isHex(c)) {error(cb, c);}
+					cb.hexCache = new StringBuilder();
+					cb.hexCache.append((char)c);
 					cb.state = State.HEX2;
 					continue;
 				case HEX2:
-					if (!isHex(c)) {error(cb.state, c);}
-					cb.hexCache.append(c);
+					if (!isHex(c)) {error(cb, c);}
+					cb.hexCache.append((char)c);
 					cb.state = State.HEX3;
 					continue;
 				case HEX3:
-					if (!isHex(c)) {error(cb.state,c);}
-					cb.hexCache.append(c);
+					if (!isHex(c)) {error(cb,c);}
+					cb.hexCache.append((char)c);
 					cb.state = State.HEX4;
 					continue;
 				case HEX4:
-					if (!isHex(c)) {error(cb.state, c);}
-					cb.hexCache.append(c);
+					if (!isHex(c)) {error(cb, c);}
+					cb.hexCache.append((char)c);
 					char u = toChar(cb.hexCache);
 					cb.cache.append(u);
 					cb.state = State.STRING_START;
 					continue;
 
 				default:
-				 error(cb.state, c);
+				 error(cb, c);
 			} // state switch 
 		}// for
 	}
@@ -323,12 +337,12 @@ public class Lexer {
 		return Character.isWhitespace(c);
 	}
 	
-	char toChar (StringBuffer buf) {
+	char toChar (CharSequence buf) {
 		assert buf.length() == 4;
 		return (char)Integer.parseInt(buf.toString(), 16);
 	}
 	
-	BigDecimal num (StringBuffer b) {
+	BigDecimal num (CharSequence b) {
 		BigDecimal bd = null;
 		try {
 			bd =	new BigDecimal(b.toString());
@@ -369,12 +383,12 @@ public class Lexer {
 		}
 	}
 	
-	void error (State state) {
-		error("??? "+ state);
+	void error (CB cb) {
+		error("??? "+ cb.state + " at pos: "+cb.pos);
 	}
 
-	void error (State state, byte c) {
-		error("unexpected char: "+(char)c+" in state: "+state);
+	void error (CB cb, byte c) {
+		error("unexpected char: "+(char)c+"("+c+") in state: "+cb.state+" at pos:"+cb.pos);
 	}
 
 	void error(String mes) {
@@ -387,13 +401,13 @@ public class Lexer {
 	
 		Lexer.CB cb = new Lexer.CB() {
 			void tok(Token tok) {
-				p(tok);
+			//	p(tok);
 			}
 			void tok(String c) {
-				p(c);
+			//	p("Str:"+c);
 			}
 			void tok(BigDecimal c) {
-				p(c);
+			//	p(c);
 			}
 		};
 
@@ -401,6 +415,18 @@ public class Lexer {
 		Lexer.lexer.lex(jsona, cb); 
 		
 		json	= "{\"a\":\"\\u2603\",\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
+		p(json);
+		Lexer.lexer.lex(json.getBytes(), cb);
+
+		json	= "{}";
+		p(json);
+		Lexer.lexer.lex(json.getBytes(), cb);
+
+		json	= "{{},{}}";
+		p(json);
+		Lexer.lexer.lex(json.getBytes(), cb);
+
+		json	= "[]";
 		p(json);
 		Lexer.lexer.lex(json.getBytes(), cb);
 

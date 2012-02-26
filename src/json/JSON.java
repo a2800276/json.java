@@ -210,7 +210,7 @@ public class JSON {
 	}
 
   public void parse(byte [] arr, int off, int len) {
-		Lexer.lexer.lex(arr, this.cb);
+		Lexer.lexer.lex(arr, off, len, this.cb);
   }
 
 	/**
