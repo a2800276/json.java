@@ -59,9 +59,9 @@ public class Lexer {
 
 	public static Lexer lexer = new Lexer();
 
-	void lex (char [] arr, CB cb) {
+	void lex (byte [] arr, CB cb) {
 		for (int i = 0; i != arr.length; ++i) {
-			char c = arr[i];
+			byte c = arr[i];
 			switch (cb.state) {
 				case VALUE:
 					if (isWS(c)) {
@@ -315,7 +315,7 @@ public class Lexer {
 		}// for
 	}
 	
-	boolean isWS(char c) {
+	boolean isWS(byte c) {
 		return Character.isWhitespace(c);
 	}
 	
@@ -335,7 +335,7 @@ public class Lexer {
 	}
 
 	
-	boolean isHex(char c) {
+	boolean isHex(byte c) {
 		switch (c) {
 			case '0':
 			case '1':
@@ -369,8 +369,8 @@ public class Lexer {
 		error("??? "+ state);
 	}
 
-	void error (State state, char c) {
-		error("unexpected char: "+c+" in state: "+state);
+	void error (State state, byte c) {
+		error("unexpected char: "+(char)c+" in state: "+state);
 	}
 
 	void error(String mes) {
@@ -379,7 +379,7 @@ public class Lexer {
 
 	public static void main (String [] args) {
 		String	json	= "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
-		char [] jsona = json.toCharArray();
+		byte [] jsona = json.getBytes();
 	
 		Lexer.CB cb = new Lexer.CB() {
 			void tok(Token tok) {
@@ -398,12 +398,12 @@ public class Lexer {
 		
 		json	= "{\"a\":\"\\u2603\",\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
 		p(json);
-		Lexer.lexer.lex(json.toCharArray(), cb);
+		Lexer.lexer.lex(json.getBytes(), cb);
 
 		json	= "{\"a\":19560954.609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
 		p(json);
 		try {
-			Lexer.lexer.lex(json.toCharArray(), cb);
+			Lexer.lexer.lex(json.getBytes(), cb);
 			p("failed: should not be here! 19560954.609845.4456456 is not a number");
 		} catch (RuntimeException re) {
 			p("expected failure: \n\t"+re.getMessage());

@@ -73,7 +73,7 @@ public class JSON {
 	 */	
 	public static Object parse (String json) {
 		LexerCB cb = new LexerCB();
-		Lexer.lexer.lex(json.toCharArray(), cb);
+		Lexer.lexer.lex(json.getBytes(), cb);
 		return cb.stack.pop();
 	}
 
@@ -107,7 +107,7 @@ public class JSON {
 		// I have yet to decide an will do so when I need to.
 	}
 
-	static class LexerCB extends Lexer.CB {
+	public static class LexerCB extends Lexer.CB {
 		Stack<Object> stack = new Stack<Object>();
 		boolean done;
 		
@@ -205,7 +205,7 @@ public class JSON {
 	/**
 	 * Parse whatever bits of JSON you have available to you.
 	 */
-	public void parse(char [] arr) {
+	public void parse(byte [] arr) {
 		Lexer.lexer.lex(arr, this.cb);
 	}
 
@@ -262,8 +262,8 @@ public class JSON {
 
 		
 		JSON j = new JSON();
-		char [] a = json.toCharArray();
-		char [] b = new char[1];
+		byte [] a = json.getBytes();
+		byte [] b = new byte[1];
 		for (int i = 0; /*i!=a.length*/; ++i) {
 			System.arraycopy(a,i,b,0,1);
 			j.parse(b);
