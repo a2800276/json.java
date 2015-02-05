@@ -19,7 +19,8 @@ public class JSONTest {
     try {
       JSON.parse(json);
       p("testNoComma failed, but arguably ok");
-    } catch (Throwable t) {
+    } catch (RuntimeException t) {
+      p("expected falure: "+t.getMessage());
     }
   }
 
@@ -45,7 +46,17 @@ public class JSONTest {
   
   static void testRndFail() {
     String json = "{\"key\":\"value\":\"value\"}";
-    JSON.parse(json);
+    try {
+      JSON.parse(json);
+      p("testRndFail missed incorrect COLON");
+    } catch (RuntimeException e) {
+    
+    }
+    json = "[,,,]";
+    try {
+      JSON.parse(json);
+      p("testRndFail missed incorrect COMMA");
+    } catch (RuntimeException e) {}
   }
 
   public static void main (String [] args) {

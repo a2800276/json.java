@@ -121,12 +121,21 @@ public class JSON {
 	public static class LexerCB extends Lexer.CB {
 		Stack<Object> stack = new Stack<Object>();
 		boolean done;
-		
+    boolean expectNextCommaOrRCurly;
 
 		void tok(Lexer.Token t) {
 
 			if (done) {error();}
-
+      if (expectNextCommaOrRCurly) {
+        switch(t) {
+          case RCURLY:
+          case COMMA:
+            expectNextCommaOrRCurly = false;
+            break;
+          default:
+            error("unbalanced key value pairs");
+        }
+      }
 			switch (t) {
 				case LCURLY:
 					stack.push(map());
@@ -135,12 +144,16 @@ public class JSON {
 					stack.push(list());
 					break;
 				case RCURLY:
-					assert stack.peek() instanceof Map;
+				  if (!(stack.peek() instanceof Map)) {
+            error("misplaced }");
+          }
 					Map m = (Map)stack.pop();
 					stash(m);
 					break;
 				case RSQUARE:
-					assert stack.peek() instanceof List;
+					if (!(stack.peek() instanceof List)) {
+            error("misplaced ]");
+          }
 					List l = (List)stack.pop();
 					stash(l);
 					break;
@@ -154,10 +167,14 @@ public class JSON {
 					stash(null);
 					break;
 				case COMMA:
-					assert stack.peek() instanceof List;
+					// if (!(stack.peek() instanceof List)) {
+          //  error("misplaced ,");
+          // }
 					break;
 				case COLON:
-					assert stack.peek() instanceof Key;
+					if (!(stack.peek() instanceof Key)) {
+            error("misplaced :");
+          }
 					break;
 				default:
 					error();
@@ -189,6 +206,7 @@ public class JSON {
 				assert stack.size() > 0;
 				assert stack.peek() instanceof Map;
 				((Map<String, Object>)stack.peek()).put(key,o);
+        expectNextCommaOrRCurly = true;
 			} else {
 				error("unexpected: "+o.getClass().getName()+" after: "+(stack.peek().getClass().getName()));
 			}
