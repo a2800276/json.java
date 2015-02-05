@@ -107,6 +107,12 @@ public class JSON {
 		// I have yet to decide an will do so when I need to.
 	}
 
+  public static String jsonifyDynamic(Object o) {
+    Encoder e = new DynamicEncoder();
+            e.encode(o);
+    return e.buf.toString();
+  }
+
 	public static class LexerCB extends Lexer.CB {
 		Stack<Object> stack = new Stack<Object>();
 		boolean done;

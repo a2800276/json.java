@@ -25,6 +25,17 @@ public class Encoder {
 		this.buf  = new StringBuilder();
 		this.circ = new java.util.LinkedList<Object>();
 	}
+  
+  /**
+   * override this in subclasses to allow custom encoding
+   */
+  boolean canEncode(Object o) {
+    return true;
+  }
+
+  void encodeCustom(Object o) {
+    eggsplod(o.getClass());
+  }
 
 	void encode (Object o) {
 		if (null == o) { 
@@ -44,8 +55,11 @@ public class Encoder {
 		} else if (o.getClass().isArray()) {
 			encodeArray(o);
 		}else {
-			p(o.getClass().getName());
-			eggsplod(o.getClass());
+      if (canEncode(o)) {
+        encodeCustom(o);
+      } else {
+			  eggsplod(o.getClass());
+      }
 		}
 	}
 	void eggsplod(Object o) {throw new RuntimeException(o.toString());}
@@ -186,5 +200,11 @@ public class Encoder {
 		} catch (RuntimeException re) {
 			p("expected failure: \n\t"+re.getMessage());
 		}
+
+    try {
+      JSON.jsonify(System.out);
+    } catch (RuntimeException re) {
+			p("expected failure: \n\t"+re.getMessage());
+    }
 	}
 }

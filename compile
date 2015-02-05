@@ -1,1 +1,1 @@
-javac -d classes `find src -name '*.java'`
+javac -d classes `find src -name '*.java'` `find tests -name '*.java'`
