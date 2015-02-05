@@ -1,0 +1,4 @@
+rm -rf classes
+mkdir classes
+javac -d classes `find src -name '*.java'`
+jar cfe json.jar json.Main -C classes .

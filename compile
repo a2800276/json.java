@@ -1,1 +1,1 @@
-javac -d classes `find src -name '*.java'` `find tests -name '*.java'`
+javac -Xlint:unchecked -d classes `find src -name '*.java'` `find tests -name '*.java'`

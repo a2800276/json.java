@@ -1,5 +1,6 @@
 package json;
 import java.util.Map;
+import java.util.HashMap;
 public class EncoderTest {
   static void testBaseTypes () {
     StringBuilder b = new StringBuilder();
@@ -59,6 +60,15 @@ public class EncoderTest {
 
   }
 
+  static void testBoolean() {
+    Map map = new HashMap();
+    map.put("bla", true);
+    String json = JSON.jsonify(map);
+    if (!(json.equals("{\"bla\":true}")) ){
+      p("testBoolean failed: "+json);
+    }
+  }
+
 
   public static void main (String [] args) {
     testBaseTypes();
@@ -66,6 +76,7 @@ public class EncoderTest {
     testArray();
     testCircular();
     testNonBaseType();
+    testBoolean();
   }
   static void p (Object o) { System.out.println(o);}
 }

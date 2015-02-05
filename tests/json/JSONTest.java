@@ -57,6 +57,9 @@ public class JSONTest {
       JSON.parse(json);
       p("testRndFail missed incorrect COMMA");
     } catch (RuntimeException e) {}
+    
+    json = "{ \"toll\" : \"toll\" }\n";
+    JSON.parse(json);
   }
 
   public static void main (String [] args) {

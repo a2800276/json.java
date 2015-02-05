@@ -51,6 +51,8 @@ public class Encoder {
 			encode(buf, (CharSequence)o);
 		} else if (o instanceof Character) {
 			encode(buf, ((Character)o).charValue());
+		} else if (o instanceof Boolean) {
+			encode(buf, ((Boolean)o).booleanValue());
 		} else if (o.getClass().isArray()) {
 			encodeArray(o);
 		}else {

@@ -1,4 +1,4 @@
-. compile
+javac -d classes `find src -name '*.java'` `find tests -name '*.java'`
 for i in CustomEncoderTest DynamicEncoderTest EncoderTest JSONTest LexerTest; do 
   echo ${i}
   echo "--------------------"
