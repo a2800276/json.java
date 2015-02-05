@@ -19,9 +19,17 @@ It's written in a very simplistic style that some people may not like. For examp
 
 ## Usage
 
+### Building
+
+Use the provided jar file. Else source the scripts:
+
+* `compile` compile with lint checks (don't need this, real programmers ignore warnings)
+* `runtest` compiles and runs tests
+* `make_jar` recreate the jar file
+
 ### Simple parsing
 
-In the simplest form, the parsing and production API follow the Javascript API: `JSON.parse(String)` and `JSON.stringigy(Object)`.
+In the simplest form, the parsing and production API follow the Javascript API: `JSON.parse(String)` and `JSON.jsonify(Object)`.
 
 ### Resulting Java types of parsed data
 
@@ -63,41 +71,67 @@ This is, in fact how the default parser is implemented. In case you would like t
 
 ### Creating JSON
 
-The facilities for creating JSON are fairly primitive and aren't at the focus of my attention. Currently the same sort of stuff™ the library produces when parsing (i.e. Lists, Maps, primary data types and Strings) can be converted to JSON automatically. Also Arrays may be used instead of Lists. Apart from that, you're currently on your own.
+The facilities for creating JSON are fairly primitive and aren't at the focus of my attention. Currently the same sort of stuff™ the library produces when parsing (i.e. Lists, Maps, primary data types and Strings) can be converted to JSON automatically. Also Arrays may be used instead of Lists. Apart from that, you're largely on your own.
+
+The current release adds two modes of creating json from arbitrary objects. The first is Reflection based. If an unhandled object contains a toJSON method returning a string, that will be used to serialize it, if you are using JSON.jsonifyDynamic:
+
+    static final String HOUSE_JSON = "{'house': {'number_of_windows':1, 'roof': 'yes'}}";
+    static class House {
+      int numWindows;
+      boolean roof;
+      public String toJSON () {
+        return HOUSE_JSON;
+      }
+    }
+    
+    String json = JSON.jsonifyDynamic(new House());
+    // Results in:
+    //    {'house': {'number_of_windows':1, 'roof': 'yes'}}
+    //  Note that this is incorrectly formatted json, using single quotes 
+    //  in the custom encoder. Let this be a lesson to you that this
+    //  feature is not without risk.
 
 
-## Miscellanea
+An alternative method is to provide a custom Encoder and use JSON.jsonifyCustom, like so (see tests/json/CustomEncoderTest.java):
 
-Parsing supports a superset of JSON as described [here][json]. The default parser will also handle JSON lacking redundant commas and colons within Objects and Arrays. This:
+    static final String somethingJson = "{'something' : 'yeah, baby!'}";
+    static class Something {}
+    static class SomethingElse {}
 
-    { "bla" "blub" "a" [1 2 3]}
+    class SomethingEncoder implements CustomEncoder.Encoder<Something> {
+      public void encode (StringBuilder b, Object s) {
+        b.append(somethingJson);
+      }
+    }
 
-is the equivalent of:
+    class SmThngElseEnc implements CustomEncoder.Encoder<SomethingElse> {
+      public void encode (StringBuilder b, Object o) {
+        b.append("'somethingElse'");
+      }
+    }
 
-	{
-		"bla" : "blub",
-		"a"   : [1,2,3],
-	}
+    Object [] obj = { "one", "two", new Something(), new SomethingElse()};
+    CustomEncoder enc = new CustomEncoder();
+    enc.addEncoder(Something.class, new SomethingEncoder());
+    enc.addEncoder(SomethingElse.class, new SmThngElseEnc());
 
-I'll probably add a strict mode at some point.
+    String res = JSON.jsonifyCustom(obj, enc);
+    //   This results in :
+    //       ["one","two",{'something' : 'yeah, baby!'},'somethingElse']
+    // See note regarding incorretly rendered JSON above.
 
-[json]:http://www.json.org
 
 ### TODO
 
 * perhaps I'll add support for a speedy mode that doesn't convert numbers and/or passes Strings as primitive arrays or Buffers …
 
 * additional serialization strategies
-	* serialize arbitray classes with `toString()`
 	* Beans style serialization (yuck!)
-	* treat arbitrary classes as data structs and
-      serialize all public fields
-    * add support for adding custom handlers for unknown 	  classes
+	* treat arbitrary classes as data structs and serialize all public fields
 
-* perhaps honor `toJSON()` methods ...
 * proper and consistant error handling
 * scavenge comprehensive test vectors for other project
-* some rudimentary build system
+* some rudimentary build system, although I'd rather pull out my fingernails than deal with maven (patches welcome)
 
 
 
@@ -109,4 +143,4 @@ In case you'd like to use it at this point anyhow, let me know and I'll accelera
 
 At this point in time, consider the code:
 
-  ©2011 Tim Becker <tim@kuriositaet.de>
+  ©2011,2015 Tim Becker <tim@kuriositaet.de>
