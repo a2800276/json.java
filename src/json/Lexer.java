@@ -40,17 +40,27 @@ public class Lexer {
 	}
 	
 	static abstract class CB {
+    // Implement these if you wish to write your own Parser, or
+    // use the JSON class, which is also a good place to look at
+    // an example of how to extend CB
+
+		abstract void tok(Token tok);
+		abstract void tok(String s);
+		abstract void tok(BigDecimal s);
+
+    // these are to for internal use only, for the lexer to
+    // maintain state between calls.
+    // don't touch :)
 		int pos;
 		State state = State.VALUE;
 		StringBuilder cache; 
 		StringBuilder hexCache; 
-		abstract void tok(Token tok);
-		abstract void tok(String s);
-		abstract void tok(BigDecimal s);
 	}
 	
-	// You shouldn't ever need more than a single instance of Lexer, so here's a
-	// prepared instance to avoid having to create garbage. 
+	// You shouldn't ever need more than a single instance of Lexer, 
+  // because the Lexer state is maintained in your implementation of CB.
+  //
+  // So here's a  prepared instance to avoid having to create garbage. 
 	//
 	// I'm not enforcing the use of a single instance because:
 	//
