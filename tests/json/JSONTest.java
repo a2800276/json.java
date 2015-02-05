@@ -42,10 +42,17 @@ public class JSONTest {
     }
 
   }
+  
+  static void testRndFail() {
+    String json = "{\"key\":\"value\":\"value\"}";
+    JSON.parse(json);
+  }
+
   public static void main (String [] args) {
     testInvalid();
     testNoComma();
     testState();
+    testRndFail();
   }
 
   static void p (Object o) {System.out.println(o);}
