@@ -405,53 +405,5 @@ public class Lexer {
 		throw new RuntimeException(mes);
 	}
 
-	public static void main (String [] args) {
-		String	json	= "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
-		byte [] jsona = json.getBytes();
-	
-		Lexer.CB cb = new Lexer.CB() {
-			void tok(Token tok) {
-			//	p(tok);
-			}
-			void tok(String c) {
-			//	p("Str:"+c);
-			}
-			void tok(BigDecimal c) {
-			//	p(c);
-			}
-		};
-
-		p(json);
-		Lexer.lexer.lex(jsona, cb); 
-		
-		json	= "{\"a\":\"\\u2603\",\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
-		p(json);
-		Lexer.lexer.lex(json.getBytes(), cb);
-
-		json	= "{}";
-		p(json);
-		Lexer.lexer.lex(json.getBytes(), cb);
-
-		json	= "{{},{}}";
-		p(json);
-		Lexer.lexer.lex(json.getBytes(), cb);
-
-		json	= "[]";
-		p(json);
-		Lexer.lexer.lex(json.getBytes(), cb);
-
-		json	= "{\"a\":19560954.609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
-		p(json);
-		try {
-			Lexer.lexer.lex(json.getBytes(), cb);
-			p("failed: should not be here! 19560954.609845.4456456 is not a number");
-		} catch (RuntimeException re) {
-			p("expected failure: \n\t"+re.getMessage());
-		}
-	}
-
-	static void p(Object o) {
-		System.out.println(o);
-	}
 
 }

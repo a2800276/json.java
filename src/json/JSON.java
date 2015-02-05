@@ -113,6 +113,11 @@ public class JSON {
     return e.buf.toString();
   }
 
+  public static String jsonifyCustom(Object o, CustomEncoder enc) {
+    enc.encode(o);
+    return enc.buf.toString();
+  }
+
 	public static class LexerCB extends Lexer.CB {
 		Stack<Object> stack = new Stack<Object>();
 		boolean done;
@@ -242,48 +247,6 @@ public class JSON {
 			this.obj = this.cb.stack.pop();
 		}
 		return this.obj;
-	}
-	
-
-	public static void main (String [] args) {
-		if (0 < args.length) {}
-
-		String json  = "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
-    
-		Object o = JSON.parse(json);
-		p(json);
-		p(o);
-
-
-		json  = "{{\"a\":19560954609845.4456456}:1,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
-		p(json);
-		try {
-			o = JSON.parse(json);
-			p("failed: JSON-Obj as key should cause exception");
-		} catch (Throwable t) {
-			p("failed as expected: \n\t"+t.getMessage());
-		}
-
-
-		json  = "{\"a\" 19560954609845.4456456 \"b\" [1 2 3] \"dindong\" {\"b\" 12}}";
-		p(json);
-		o = JSON.parse(json);
-		p(o);
-
-		
-		JSON j = new JSON();
-		byte [] a = json.getBytes();
-		byte [] b = new byte[1];
-		for (int i = 0; /*i!=a.length*/; ++i) {
-			System.arraycopy(a,i,b,0,1);
-			j.parse(b);
-			if (j.done()) break;
-		}
-		p(j.obj());
-	}
-
-	static void p (Object o) {
-		System.out.println(o);
 	}
 
 }

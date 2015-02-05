@@ -1,25 +1,64 @@
 package json;
 
-
 public class CustomEncoderTest {
-  static final String HOUSE_JSON = "{'house': {'number_of_windows':1, 'roof': 'yes'}}";
-  static class House {
-    int numWindows;
-    boolean roof;
-    public String toJSON () {
-      return HOUSE_JSON;
+  static final String somethingJson = "{'something' : 'yeah, baby!'}";
+  static class Something {
+  
+  }
+
+  static class SomethingElse {}
+
+  static class SomethingEncoder implements CustomEncoder.Encoder<Something> {
+    public void encode (StringBuilder b, Object s) {
+      b.append(somethingJson);
     }
   }
-  
-  public static void testHouse () {
-    String json = JSON.jsonifyDynamic(new House());
-    if (!json.equals(HOUSE_JSON)) {
-      p("failed: testHouse:"+json);
+
+  static class SmThngElseEnc implements CustomEncoder.Encoder<SomethingElse> {
+    public void encode (StringBuilder b, Object o) {
+      b.append("'somethingElse'");
     }
+  }
+
+  static void testCustom () {
+    CustomEncoder enc = new CustomEncoder();
+    enc.addEncoder(Something.class, new SomethingEncoder());
+    
+
+    String res = JSON.jsonifyCustom(new Something(), enc);
+    if (!res.equals(somethingJson)) {
+      p("testCustom failed: "+res);
+    }
+  }
+
+  static void testCustomConstructed () {
+    Object [] obj = { "one", "two", new Something()};
+    CustomEncoder enc = new CustomEncoder();
+    enc.addEncoder(Something.class, new SomethingEncoder());
+
+    String res = JSON.jsonifyCustom(obj, enc);
+    if (!res.equals("[\"one\",\"two\",{'something' : 'yeah, baby!'}]")) {
+      p("testCustomConstructed failed: "+res);
+    }
+  }
+
+  static void testCustomConstructedMultEnc() {
+    Object [] obj = { "one", "two", new Something(), new SomethingElse()};
+    CustomEncoder enc = new CustomEncoder();
+    enc.addEncoder(Something.class, new SomethingEncoder());
+    enc.addEncoder(SomethingElse.class, new SmThngElseEnc());
+
+    String res = JSON.jsonifyCustom(obj, enc);
+    if (!res.equals("[\"one\",\"two\",{'something' : 'yeah, baby!'},'somethingElse']")) {
+      p("testCustomConstructedMultEnc failed: "+res);
+    }
+
   }
 
   public static void main (String [] args) {
-    testHouse();
+    testCustom();
+    testCustomConstructed();
+    testCustomConstructedMultEnc();
   }
 
   static void p (Object o) {

@@ -6,7 +6,6 @@ import java.util.Set;
 
 public class Encoder {
 	
-	
 	StringBuilder buf;
 
 	// Keep track of circular data-structures: before encoding a
@@ -34,7 +33,7 @@ public class Encoder {
   }
 
   void encodeCustom(Object o) {
-    eggsplod(o.getClass());
+    eggsplod("unexpected object: "+o.getClass());
   }
 
 	void encode (Object o) {
@@ -165,46 +164,5 @@ public class Encoder {
 	}
 	static void encode (StringBuilder buf, char c) {
 		buf.append((int)c);
-	}
-
-	static void p (Object o) {
-		System.out.println(o);
-	}
-
-	public static void main (String [] args) {
-		StringBuilder b = new StringBuilder();
-		encode(b, true);
-		encode(b, 1);
-		encode(b, (long)1);
-		encode(b, (float)1.0);
-		encode(b, (double)1.0);
-		encode(b, (byte)1);
-		encode(b, (short)1);
-		encode(b, '1');
-	
-		p(b);
-
-		String	json	= "{\"a\":19560954609845.4456456,\"b\":[1,2,3],\"dindong\":{\"b\":12}}";
-		Map m = (Map)JSON.parse(json);
-		p(json);		
-		p(JSON.jsonify(m));
-		
-		int [] is = {1,2,3};
-		p(JSON.jsonify(is));
-		
-		Map map = new java.util.HashMap();
-		map.put("bla", map);
-		try {
-			p(JSON.jsonify(map));
-			p("failed: data contained circular refs, should have thrown exception");
-		} catch (RuntimeException re) {
-			p("expected failure: \n\t"+re.getMessage());
-		}
-
-    try {
-      JSON.jsonify(System.out);
-    } catch (RuntimeException re) {
-			p("expected failure: \n\t"+re.getMessage());
-    }
 	}
 }

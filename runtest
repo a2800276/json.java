@@ -1,4 +1,9 @@
-javac -d classes `find src -name \*.java`
-java -cp classes json.Encoder
-java -cp classes json.Lexer
-java -cp classes json.JSON
+. compile
+for i in CustomEncoderTest DynamicEncoderTest EncoderTest JSONTest LexerTest; do 
+  echo ${i}
+  echo "--------------------"
+  java -classpath classes json.${i}
+  echo "--------------------"
+done
+
+
